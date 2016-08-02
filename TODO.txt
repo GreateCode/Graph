@@ -1,0 +1,2 @@
+﻿1.将图的repository<edge>换成只存边的数据,顶点中存边的数据的id以及对面顶点的id.
+2.repository中,在删除stock之后若repository被析构,stock将可能被析构两次.考虑用链表或vector<unique_ptr<...>>实现repository
