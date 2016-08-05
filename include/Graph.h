@@ -122,26 +122,59 @@ namespace lzhlib
         template <>
         class vertex<null_value_tag>                          //only used by graph_impl
         {
+
         public:
             using vertex_value_t = null_value_tag;
+            class edge_ref
+            {
+            public:
+                edge_id associated_edge() const
+                {
+                    return edge_;
+                }
+                vertex_id opposite_vertex() const
+                {
+                    return vertex_;
+                }
+                bool is_connected(vertex_id v) const
+                {
+                    return vertex_ == v;
+                }
+
+                bool operator<(edge_ref rhs) const
+                {
+                    return edge_ < rhs.edge_;
+                }
+                bool operator==(edge_ref rhs) const
+                {
+                    return edge_ == rhs.edge_;
+                }
+                bool operator!=(edge_ref rhs) const
+                {
+                    return !(*this == rhs);
+                }
+            private:
+                edge_id edge_;
+                vertex_id vertex_;
+            };
 //            bool is_associated(edge_id i)
 //            {
 //                return edges.find(i)!=edges.end();            //a possibly more efficent way :ask edge for this
 //            }
-            std::set<edge_id>const& get_associated_edges() const
+            std::set<edge_ref>const& associated_edges() const
             {
                 return edges;
             }
-            void add_associated_edge(edge_id i)
+            void add_associated_edge(edge_ref i)
             {
                 edges.insert(i);
             }
-            void remove_associated_edge(edge_id i)
+            void remove_associated_edge(edge_ref i)
             {
                 edges.erase(i);
             }
         private:
-            std::set<edge_id> edges;
+            std::set<edge_ref> edges;
         };
         template <class VertexValueT>
         class vertex: public vertex<null_value_tag>
@@ -255,29 +288,30 @@ namespace lzhlib
     public:
         using vertex_t = detail::vertex<VertexValueT>;
         using vertex_value_t = typename vertex_t::vertex_value_t;
+        using edge_ref_t = typename vertex_t::edge_ref;
         using edge_t = detail::edge<EdgeValueT>;
         using edge_value_t = typename edge_t::edge_value_t;
         using pair_t = typename edge_t::pair_t;
 
         bool adjacent(vertex_id x, vertex_id y) const
         {
-            if(get_vertex(x).get_associated_edges().size() < get_vertex(y).get_associated_edges().size())
+            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
                 return adjacent_impl(x, y);
             else
                 return adjacent_impl(y, x);
         }
-        std::vector<vertex_id> neighbors(vertex_id v) const
-        {
-            std::set<edge_id> const& edges = get_vertex(v).get_associated_edges();
+        std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = r.associated_edges(v);
+        {                                                                             //在 for(auto e : s)中
+            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges(); //再     vertex_id = e.opposite_vertex();
             std::vector<vertex_id> ret;
             ret.reserve(edges.size());
-            for(edge_id e : edges)
+            for(edge_ref_t e : edges)
             {
-                ret.push_back(get_opposite_vertex(v, e));
+                ret.push_back(e.opposite_vertex());
             }
             return ret;
         }
-        std::set<edge_id>const& get_associated_edges(vertex_id v) const
+        std::set<edge_ref_t>const& associated_edges(vertex_id v) const
         {
             return get_vertex(v).get_associated_edges();
         }
@@ -288,37 +322,39 @@ namespace lzhlib
         }
         void remove_vertex(vertex_id v)
         {
-            std::set<edge_id> edges = get_vertex(v).get_associated_edges();
-            for(edge_id e : edges)
+            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges();
+            for(edge_ref_t e : edges)
             {
-                remove_edge_from(e, v);
+                get_vertex(e.opposite_vertex()).remove_associated_edge(e);
+                edge_repository.remove_stock(e.associated_edge());
             }
             vertex_repository.remove_stock(v);
         }
         template <class ...Args>
-        edge_id add_edge(vertex_id x, vertex_id y,Args&& ...args)
+        edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
         {
             edge_id result = edge_repository.add_stock(std::forward<Args>(args)...);
-            get_edge(result).set_associated_vertices(x,y);
-            get_vertex(x).add_associated_edge(result);
-            get_vertex(y).add_associated_edge(result);
+            get_edge(result).set_associated_vertices(x, y);
+            get_vertex(x).add_associated_edge({result, y});
+            get_vertex(y).add_associated_edge({result, x});
             return result;
         }
         void remove_edge(vertex_id x, vertex_id y)
         {
-            remove_edge(get_edge(x,y));
+            remove_edge(get_edge(x, y));
         }
         void remove_edge(edge_id e)
         {
             pair_t vertices = get_edge(e).get_associated_vertices();
-            get_vertex(vertices.first).remove_associated_edge(e);
-            remove_edge_from(e,vertices.second);
+            get_vertex(vertices.first).remove_associated_edge({e,vertices.second});
+            get_vertex(vertices.second).remove_associated_edge({e,vertices.first});
+            edge_repository.remove_stock(e);
         }
 
         edge_id get_edge(vertex_id x, vertex_id y) const
         {
             assert(adjacent(x, y));
-            if(get_vertex(x).get_associated_edges().size() < get_vertex(y).get_associated_edges().size())
+            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
                 return get_edge_impl(x, y);
             else
                 return get_edge_impl(y, x);
@@ -377,10 +413,10 @@ namespace lzhlib
 
         bool adjacent_impl(vertex_id x, vertex_id y) const
         {
-            std::set<edge_id> const& edges = get_vertex(x).get_associated_edges();
-            for(edge_id e : edges)
+            std::set<edge_ref_t> const& edges = get_vertex(x).associated_edges();
+            for(edge_ref_t r : edges)
             {
-                if(get_edge(e).is_associated(y))
+                if(r.is_connected(y))
                     return true;
             }
             return false;
@@ -405,11 +441,11 @@ namespace lzhlib
         }
         edge_id get_edge_impl(vertex_id x, vertex_id y) const
         {
-            std::set<edge_id> const& edges = get_vertex(x).get_associated_edges();
-            for(edge_id e : edges)
+            std::set<edge_ref_t> const& edges = get_vertex(x).associated_edges();
+            for(edge_ref_t e : edges)
             {
-                if(get_edge(e).is_associated(y))
-                    return e;
+                if(e.is_connected(y))
+                    return e.associated_edge();
             }
             exceptions::throw_exception_require_edge_that_does_not_exist(x, y);
         }

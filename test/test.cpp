@@ -9,24 +9,24 @@ using namespace lzhlib::detail;
 void test_vertex()
 {
     vertex<int> v{};
-    edge_id e1{1}, e2{2};
+    vertex<int>::edge_ref e1{1,vertex_id()}, e2{2,vertex_id()};
     v.add_associated_edge(e1);
-    std::set<edge_id> s = v.get_associated_edges();
+    auto s = v.associated_edges();
     assert(s.size() == 1);
     assert(s.find(e1) != s.end() && s.find(e2) == s.end());
 
     v.add_associated_edge(e2);
-    s = v.get_associated_edges();
+    s = v.associated_edges();
     assert(s.size() == 2);
     assert(s.find(e1) != s.end() && s.find(e2) != s.end());
 
     v.remove_associated_edge(e1);
-    s = v.get_associated_edges();
+    s = v.associated_edges();
     assert(s.size() == 1);
     assert(s.find(e1) == s.end() && s.find(e2) != s.end());
 
     v.remove_associated_edge(e2);
-    s = v.get_associated_edges();
+    s = v.associated_edges();
     assert(s.empty());
     assert(s.find(e1) == s.end() && s.find(e2) == s.end());
 
@@ -100,18 +100,18 @@ void test_vertex_edge_and_repository()
     vertex_id v1 = rv.add_stock("b");
     edge_id e0 = re.add_stock("a and b");
 
-    rv.get_stock(v0).add_associated_edge(e0);
-    rv.get_stock(v1).add_associated_edge(e0);
+    rv.get_stock(v0).add_associated_edge({e0,v1});
+    rv.get_stock(v1).add_associated_edge({e0,v0});
     re.get_stock(e0).set_associated_vertices(v0, v1);
 
     assert(re.get_stock(e0).is_associated(v0));
     assert(re.get_stock(e0).is_associated(v1));
 
-    std::set<edge_id>const& s0 = rv.get_stock(v0).get_associated_edges();
-    assert(s0.find(e0) != s0.end());
+    auto const& s0 = rv.get_stock(v0).associated_edges();
+    assert(s0.find({e0,v1}) != s0.end());
 
-    std::set<edge_id>const& s1 = rv.get_stock(v1).get_associated_edges();
-    assert(s1.find(e0) != s1.end());
+    auto const& s1 = rv.get_stock(v1).associated_edges();
+    assert(s1.find({e0,v0}) != s1.end());
 }
 class test_undirected_graph
 {
