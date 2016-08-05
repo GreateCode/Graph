@@ -3,6 +3,7 @@
 #include <exception>
 #include <stdexcept>
 #include <vector>
+#include <memory>
 #include <set>
 namespace lzhlib
 {
@@ -20,6 +21,7 @@ namespace lzhlib
     public:
         using stock_t = StockT;
         using id_t = typename traits::stock_traits<stock_t>::id_t;
+        using pointer_t = std::unique_ptr<stock_t>;
 
         class attempt_to_use_unassigned_stock: public std::out_of_range
         {
@@ -47,7 +49,7 @@ namespace lzhlib
                 throw attempt_to_use_unassigned_stock(id);
             }
 #endif // NDEBUG
-            return stocks[id.id];
+            return *stocks[id.id];
         }
         stock_t const& get_stock(id_t id) const
         {
@@ -57,7 +59,7 @@ namespace lzhlib
                 throw attempt_to_use_unassigned_stock(id);
             }
 #endif // NDEBUG
-            return stocks[id.id];
+            return *stocks[id.id];
         }
         template <class ...Args>
         id_t add_stock(Args&&... args)
@@ -73,7 +75,7 @@ namespace lzhlib
         }
         void remove_stock(id_t id)
         {
-            get_stock(id).~stock_t();
+            stocks[id.id].reset();
             ids_of_living_stocks.erase(id);
             ids_of_reusable_stocks.insert(id);
         }
@@ -93,7 +95,7 @@ namespace lzhlib
         template <class ...Args>
         id_t allocate_stock(Args&&... args)
         {
-            stocks.emplace_back(std::forward<Args>(args)...);
+            stocks.push_back(std::make_unique<stock_t>(std::forward<Args>(args)...));
             id_t ret{stocks.size() - 1};
             ids_of_living_stocks.insert(ret);
             return ret;
@@ -103,7 +105,7 @@ namespace lzhlib
         {
             typename std::set<id_t>::iterator i = iterator_of_a_reusable_stock();
             id_t ret = *i;
-            new(&get_reusable_stock(ret)) stock_t(std::forward<Args>(args)...);
+            get_reusable_pointer(ret) = std::make_unique<stock_t>(std::forward<Args>(args)...);
             ids_of_reusable_stocks.erase(i);
             ids_of_living_stocks.insert(ret);
             return ret;
@@ -112,7 +114,7 @@ namespace lzhlib
         {
             return ids_of_reusable_stocks.begin();
         }
-        stock_t& get_reusable_stock(id_t id)
+        pointer_t& get_reusable_pointer(id_t id)
         {
 #ifndef NDEBUG
             if(ids_of_reusable_stocks.find(id) == ids_of_reusable_stocks.end())
@@ -123,7 +125,7 @@ namespace lzhlib
             return stocks[id.id];
         }
     private:
-        std::vector<stock_t> stocks;
+        std::vector<pointer_t> stocks;
         std::set<id_t> ids_of_living_stocks;
         std::set<id_t> ids_of_reusable_stocks;
     };
