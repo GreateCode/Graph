@@ -68,7 +68,7 @@ void test_vertex_repository()
     }
     catch(repository<vertex<int>>::attempt_to_use_unassigned_stock e)
     {
-        assert(e.what() == std::string("Attempt to use unassigned stock which id is ") + std::to_string(i0.id) + "!");
+        assert(e.what() == std::string("Attempt to use unassigned stock which id is ") + std::to_string(i0.id()) + "!");
     }
 
     vertex_id i1 = r0.add_stock(2);

@@ -42,20 +42,24 @@ namespace lzhlib
         friend struct invalid_vertex;
     private:
         vertex_id(unsigned long long i)
-            : id(i)
+            : id_(i)
         {}
     public:
         vertex_id() = default;
         bool operator<(vertex_id rhs) const
         {
-            return id < rhs.id;
+            return id_ < rhs.id_;
         }
         bool operator==(vertex_id rhs) const
         {
-            return id == rhs.id;
+            return id_ == rhs.id_;
         }
     private:
-        unsigned long long id = static_cast<unsigned long long>(-1);     //vector::size_type 为unsigned long long
+        auto id() const noexcept
+        {
+            return id_;
+        }
+        unsigned long long id_ = static_cast<unsigned long long>(-1);     //vector::size_type 为unsigned long long
     };
     struct invalid_vertex
     {
@@ -69,23 +73,27 @@ namespace lzhlib
     private:
         edge_id() = default;
         edge_id(unsigned long long i)
-            : id(i)
+            : id_(i)
         {}
     public:
         bool operator<(edge_id rhs) const
         {
-            return id < rhs.id;
+            return id_ < rhs.id_;
         }
         bool operator==(edge_id rhs) const
         {
-            return id == rhs.id;
+            return id_ == rhs.id_;
         }
         bool operator!=(edge_id rhs) const
         {
             return !(*this == rhs);
         }
     private:
-        unsigned long long id;
+        auto id() const noexcept
+        {
+            return id_;
+        }
+        unsigned long long id_;
     };
 
     namespace exceptions
@@ -94,7 +102,7 @@ namespace lzhlib
         {
         public:
             require_edge_that_does_not_exist(vertex_id x, vertex_id y)
-                : std::logic_error(std::string("require edge that doesn't exist!The vertices ids are ") + std::to_string(x.id) + " and " + std::to_string(y.id) + ".")
+                : std::logic_error(std::string("require edge that doesn't exist!The vertices ids are ") + std::to_string(x.id()) + " and " + std::to_string(y.id()) + ".")
             {
 
             }
@@ -336,7 +344,7 @@ namespace lzhlib
         {
             return get_edge(e).edge_value();
         }
-        
+
         vertex_id first_vertex() const
         {
             return vertex_repository.first_stock();

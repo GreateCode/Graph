@@ -11,7 +11,9 @@ namespace lzhlib
     namespace traits
     {
         template <class StockT>
-        struct stock_traits
+        struct stock_traits                  //特化提供type member: id_t
+                                             //                     id_t的对象id需使以下代码合法:
+                                             //                     static_cast<vector<StockT>::size_type>(id.id());
         {
         };
     }
@@ -27,7 +29,16 @@ namespace lzhlib
         {
         public:
             attempt_to_use_unassigned_stock(id_t id)
-                : out_of_range(std::string("Attempt to use unassigned stock which id is ") + std::to_string(id.id) + "!")
+                : out_of_range(std::string("Attempt to use unassigned stock which id is ") + std::to_string(id.id()) + "!")
+            {
+
+            }
+        };
+        class attempt_to_remove_unremovable_stock: public std::out_of_range
+        {
+        public:
+            attempt_to_remove_unremovable_stock(id_t id)
+                : out_of_range(std::string("Attempt to use unremovable stock which id is ") + std::to_string(id.id()) + "!")
             {
 
             }
@@ -36,7 +47,7 @@ namespace lzhlib
         {
         public:
             attempt_to_reuse_unreusable_stock(id_t id)
-                : out_of_range(std::string("Attempt to reuse unreusable stock which id is ") + std::to_string(id.id) + "!")
+                : out_of_range(std::string("Attempt to reuse unreusable stock which id is ") + std::to_string(id.id()) + "!")
             {
             }
         };
@@ -44,27 +55,27 @@ namespace lzhlib
         stock_t& get_stock(id_t id)
         {
 #ifndef NDEBUG
-            if(ids_of_living_stocks.find(id) == ids_of_living_stocks.end())
+            if(is_not_found_in_living_stocks(id))
             {
                 throw attempt_to_use_unassigned_stock(id);
             }
 #endif // NDEBUG
-            return *stocks[id.id];
+            return *stocks[id.id()];
         }
         stock_t const& get_stock(id_t id) const
         {
 #ifndef NDEBUG
-            if(ids_of_living_stocks.find(id) == ids_of_living_stocks.end())
+            if(is_not_found_in_living_stocks(id))
             {
                 throw attempt_to_use_unassigned_stock(id);
             }
 #endif // NDEBUG
-            return *stocks[id.id];
+            return *stocks[id.id()];
         }
         template <class ...Args>
         id_t add_stock(Args&&... args)
         {
-            if(ids_of_reusable_stocks.empty())
+            if(no_reusable_stocks())
             {
                 return allocate_stock(std::forward<Args>(args)...);
             }
@@ -75,7 +86,11 @@ namespace lzhlib
         }
         void remove_stock(id_t id)
         {
-            stocks[id.id].reset();
+#ifndef NDEBUG
+            if(is_not_found_in_living_stocks(id))
+                throw attempt_to_remove_unremovable_stock(id);
+#endif // NDEBUG
+            stocks[id.id()].reset();
             ids_of_living_stocks.erase(id);
             ids_of_reusable_stocks.insert(id);
         }
@@ -92,6 +107,14 @@ namespace lzhlib
             return *++(ids_of_living_stocks.find(current_stock));
         }
     private:
+        bool is_not_found_in_living_stocks(id_t id) const
+        {
+            return ids_of_living_stocks.find(id) == ids_of_living_stocks.end();
+        }
+        bool no_reusable_stocks()
+        {
+            return ids_of_reusable_stocks.empty();
+        }
         template <class ...Args>
         id_t allocate_stock(Args&&... args)
         {
@@ -105,7 +128,7 @@ namespace lzhlib
         {
             typename std::set<id_t>::iterator i = iterator_of_a_reusable_stock();
             id_t ret = *i;
-            get_reusable_pointer(ret) = std::make_unique<stock_t>(std::forward<Args>(args)...);
+            reusable_pointer(ret) = std::make_unique<stock_t>(std::forward<Args>(args)...);
             ids_of_reusable_stocks.erase(i);
             ids_of_living_stocks.insert(ret);
             return ret;
@@ -114,15 +137,19 @@ namespace lzhlib
         {
             return ids_of_reusable_stocks.begin();
         }
-        pointer_t& get_reusable_pointer(id_t id)
+        pointer_t& reusable_pointer(id_t id)
         {
 #ifndef NDEBUG
-            if(ids_of_reusable_stocks.find(id) == ids_of_reusable_stocks.end())
+            if(is_not_found_in_reusable_stocks(id))
             {
                 throw attempt_to_reuse_unreusable_stock(id);
             }
 #endif // NDEBUG
-            return stocks[id.id];
+            return stocks[id.id()];
+        }
+        bool is_not_found_in_reusable_stocks(id_t id) const
+        {
+            return ids_of_reusable_stocks.find(id) == ids_of_reusable_stocks.end();
         }
     private:
         std::vector<pointer_t> stocks;
