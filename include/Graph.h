@@ -59,7 +59,7 @@ namespace lzhlib
         {
             return id_;
         }
-        stock_id id_ = stock_id{static_cast<unsigned long long>(-1)};     //vector::size_type 为unsigned long long
+        stock_id id_{static_cast<unsigned long long>(-1)};     //vector::size_type 为unsigned long long
     };
     struct invalid_vertex
     {
