@@ -58,7 +58,7 @@ void test_edge()
 void test_vertex_repository()
 {
     repository<vertex<int>> r0;
-    vertex_id i0 = r0.add_stock(1);
+    auto i0 = r0.add_stock(1);
     assert(r0.get_stock(i0).vertex_value() == 1);
 
     r0.remove_stock(i0);
@@ -71,12 +71,12 @@ void test_vertex_repository()
         assert(e.what() == std::string("Attempt to use unassigned stock which id is ") + std::to_string(i0.id()) + "!");
     }
 
-    vertex_id i1 = r0.add_stock(2);
+    auto i1 = r0.add_stock(2);
     assert(r0.ids_of_living_stocks.size() == 1);
     assert(r0.ids_of_reusable_stocks.size() == 0);
     assert(r0.get_stock(i1).vertex_value() == 2);
 
-    vertex_id i2 = r0.add_stock(3);
+    auto i2 = r0.add_stock(3);
     assert(r0.ids_of_living_stocks.size() == 2);
     assert(r0.ids_of_reusable_stocks.size() == 0);
     assert(r0.get_stock(i1).vertex_value() == 2);
@@ -96,9 +96,9 @@ void test_vertex_edge_and_repository()
     repository<vertex<string>> rv;
     repository<edge<string>> re;
 
-    vertex_id v0 = rv.add_stock("a");
-    vertex_id v1 = rv.add_stock("b");
-    edge_id e0 = re.add_stock("a and b");
+    auto v0 = rv.add_stock("a");
+    auto v1 = rv.add_stock("b");
+    auto e0 = re.add_stock("a and b");
 
     rv.get_stock(v0).add_associated_edge({e0,v1});
     rv.get_stock(v1).add_associated_edge({e0,v0});

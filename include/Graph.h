@@ -36,12 +36,12 @@ namespace lzhlib
     class vertex_id
     {
         friend struct invalid_vertex;
-        template<class>
-        friend class repository;
         friend class exceptions::require_edge_that_does_not_exist;
-        friend struct invalid_vertex;
     private:
         vertex_id(unsigned long long i)
+            : id_{i}
+        {}
+        vertex_id(stock_id i)
             : id_(i)
         {}
     public:
@@ -59,7 +59,7 @@ namespace lzhlib
         {
             return id_;
         }
-        unsigned long long id_ = static_cast<unsigned long long>(-1);     //vector::size_type 为unsigned long long
+        stock_id id_ = stock_id{static_cast<unsigned long long>(-1)};     //vector::size_type 为unsigned long long
     };
     struct invalid_vertex
     {
@@ -68,11 +68,12 @@ namespace lzhlib
     constexpr vertex_id invalid_vertex_id = invalid_vertex::id;
     class edge_id
     {
-        template<class>
-        friend class repository;
     private:
         edge_id() = default;
         edge_id(unsigned long long i)
+            : id_{i}
+        {}
+        edge_id(stock_id i)
             : id_(i)
         {}
     public:
@@ -93,7 +94,7 @@ namespace lzhlib
         {
             return id_;
         }
-        unsigned long long id_;
+        stock_id id_;
     };
 
     namespace exceptions
@@ -102,7 +103,7 @@ namespace lzhlib
         {
         public:
             require_edge_that_does_not_exist(vertex_id x, vertex_id y)
-                : std::logic_error(std::string("require edge that doesn't exist!The vertices ids are ") + std::to_string(x.id()) + " and " + std::to_string(y.id()) + ".")
+                : std::logic_error(std::string("require edge that doesn't exist!The vertices ids are ") + std::to_string(x.id().id()) + " and " + std::to_string(y.id().id()) + ".")
             {
 
             }
@@ -301,7 +302,8 @@ namespace lzhlib
                 return adjacent_impl(y, x);
         }
         std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = r.associated_edges(v);
-        {                                                                             //在 for(auto e : s)中
+        {
+            //在 for(auto e : s)中
             std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges(); //再     vertex_id = e.opposite_vertex();
             std::vector<vertex_id> ret;
             ret.reserve(edges.size());
@@ -346,9 +348,9 @@ namespace lzhlib
         void remove_edge(edge_id e)
         {
             pair_t vertices = get_edge(e).get_associated_vertices();
-            get_vertex(vertices.first).remove_associated_edge({e,vertices.second});
-            get_vertex(vertices.second).remove_associated_edge({e,vertices.first});
-            edge_repository.remove_stock(e);
+            get_vertex(vertices.first).remove_associated_edge({e, vertices.second});
+            get_vertex(vertices.second).remove_associated_edge({e, vertices.first});
+            edge_repository.remove_stock(e.id());
         }
 
         edge_id get_edge(vertex_id x, vertex_id y) const
@@ -396,19 +398,19 @@ namespace lzhlib
     private:
         vertex_t& get_vertex(vertex_id v)
         {
-            return vertex_repository.get_stock(v);
+            return vertex_repository.get_stock(v.id());
         }
         vertex_t const& get_vertex(vertex_id v) const
         {
-            return vertex_repository.get_stock(v);
+            return vertex_repository.get_stock(v.id());
         }
         edge_t& get_edge(edge_id e)
         {
-            return edge_repository.get_stock(e);
+            return edge_repository.get_stock(e.id());
         }
         edge_t const& get_edge(edge_id e) const
         {
-            return edge_repository.get_stock(e);
+            return edge_repository.get_stock(e.id());
         }
 
         bool adjacent_impl(vertex_id x, vertex_id y) const
