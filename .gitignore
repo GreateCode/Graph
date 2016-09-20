@@ -3,3 +3,8 @@ bin/
 obj/
 Debug/
 Release/
+*.depend
+*.layout
+*.mk
+*.project
+Graph.txt
