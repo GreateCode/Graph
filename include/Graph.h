@@ -36,9 +36,9 @@ namespace lzhlib
 	class vertex_id
 	{
 		friend struct invalid_vertex;
-		friend class exceptions::require_edge_that_does_not_exist;
+		friend class exceptions::require_edge_that_does_not_exist; //for vertex_id::id()
 	private:
-		vertex_id(unsigned long long i)
+		vertex_id(std::size_t i)
 			: id_ {i}
 		{}
 		vertex_id(stock_id i)
@@ -59,7 +59,7 @@ namespace lzhlib
 		{
 			return id_;
 		}
-		stock_id id_ {static_cast<unsigned long long>(-1)};    //vector::size_type 为unsigned long long
+		stock_id id_ {static_cast<std::size_t>(-1)};
 	};
 	struct invalid_vertex
 	{
@@ -70,7 +70,7 @@ namespace lzhlib
 	{
 	private:
 		edge_id() = default;
-		edge_id(unsigned long long i)
+		edge_id(std::size_t i)
 			: id_ {i}
 		{}
 		edge_id(stock_id i)
@@ -119,9 +119,9 @@ namespace lzhlib
 	{
 
 		template<class VertexValueT = null_value_tag>
-		class vertex;                                         //only used by graph_impl
+		class vertex;
 		template <>
-		class vertex<null_value_tag>                          //only used by graph_impl
+		class vertex<null_value_tag>
 		{
 
 		public:
@@ -288,9 +288,8 @@ namespace lzhlib
 		}
 		std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = r.associated_edges(v);
 		{
-			//在 for(auto e : s)中
-			std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges(); //再     vertex_id = e.opposite_vertex();
-			std::vector<vertex_id> ret;
+			std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges(); //在 for(auto e : s)中
+			std::vector<vertex_id> ret;                                               //再     vertex_id = e.opposite_vertex();
 			ret.reserve(edges.size());
 			for(edge_ref_t e : edges)
 			{

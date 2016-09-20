@@ -1,5 +1,6 @@
 #ifndef REPOSITORY_H_INCLUDED
 #define REPOSITORY_H_INCLUDED
+#include <cstddef>    //for std::size_t
 #include <exception>
 #include <stdexcept>
 #include <vector>
@@ -23,7 +24,7 @@ namespace lzhlib
 			return id_;
 		}
 	private:
-		unsigned long long id_;
+		std::size_t id_;
 	};
 	template <class StockT>
 	class repository
