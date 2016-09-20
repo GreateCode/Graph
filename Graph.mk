@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=lizhe
-Date                   :=20/09/2016
+Date                   :=2016/9/20
 CodeLitePath           :="D:/Program Files/CodeLite"
 LinkerName             :="C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/g++.exe"
 SharedObjectLinkerName :="C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/g++.exe" -shared -fPIC
@@ -52,7 +52,7 @@ LibPath                := $(LibraryPathSwitch).
 AR       := "C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/ar.exe" rcu
 CXX      := "C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/g++.exe"
 CC       := "C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/gcc.exe"
-CXXFLAGS :=  -g -O0 -std=c++14 -Wall -finput-charset=utf-8 -static-libgcc  -static-libstdc++ -fexec-charset=GBK $(Preprocessors)
+CXXFLAGS :=  -g -O0 -std=c++14 -Wall -finput-charset=utf-8 -static-libgcc  -static-libstdc++ -fexec-charset=GBK -ID:\lzh\mylibrary $(Preprocessors)
 CFLAGS   :=  -g -O0 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := "C:/Program Files/mingw-w64/x86_64-5.3.0-posix-seh-rt_v4-rev0/mingw64/bin/as.exe"
