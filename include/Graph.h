@@ -102,15 +102,15 @@ namespace lzhlib
         class require_edge_that_does_not_exist: public std::logic_error
         {
         public:
-            require_edge_that_does_not_exist(vertex_id x, vertex_id y)
-                : std::logic_error(std::string("require edge that doesn't exist!The vertices ids are ") + std::to_string(x.id().id()) + " and " + std::to_string(y.id().id()) + ".")
+            require_edge_that_does_not_exist()
+                : std::logic_error(std::string("require edge that doesn't exist!"))
             {
 
             }
         };
-        [[noreturn]] void throw_exception_require_edge_that_does_not_exist(vertex_id x, vertex_id y)
+        [[noreturn]] void throw_exception_require_edge_that_does_not_exist()
         {
-            throw exceptions::require_edge_that_does_not_exist(x, y);
+            throw exceptions::require_edge_that_does_not_exist();
         }
     }
 
@@ -170,9 +170,40 @@ namespace lzhlib
             {
                 edges.insert(i);
             }
-            void remove_associated_edge(edge_ref i)
+            void remove_associated_edge(edge_ref i)           //i.asociated_edge()对应的边将会移除.忽略i.opposite_vertex的值.
             {
                 edges.erase(i);
+            }
+
+            bool adjacent(vertex_id v) const
+            {
+                std::set<edge_ref> const& edges = associated_edges();
+                for(edge_ref r : edges)
+                {
+                    if(r.is_connected(v))
+                        return true;
+                }
+                return false;
+            }
+            bool associated(edge_id e) const
+            {
+                std::set<edge_ref> const& edges = associated_edges();
+                for(edge_ref r : edges)
+                {
+                    if(r.associated_edge() == e)
+                        return true;
+                }
+                return false;
+            }
+            edge_id associated_edge(vertex_id y) const
+            {
+                std::set<edge_ref> const& edges = associated_edges();
+                for(edge_ref e : edges)
+                {
+                    if(e.is_connected(y))
+                        return e.associated_edge();
+                }
+                exceptions::throw_exception_require_edge_that_does_not_exist();
             }
         private:
             std::set<edge_ref> edges;
@@ -282,14 +313,14 @@ namespace lzhlib
         bool adjacent(vertex_id x, vertex_id y) const
         {
             if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
-                return adjacent_impl(x, y);
+                return get_vertex(x).adjacent(y);
             else
-                return adjacent_impl(y, x);
+                return get_vertex(y).adjacent(x);
         }
-        std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = r.associated_edges(v);
+        std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = graph.associated_edges(v);
         {
-            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges(); //在 for(auto e : s)中
-            std::vector<vertex_id> ret;                                               //再     vertex_id = e.opposite_vertex();
+            std::set<edge_ref_t> const& edges = associated_edges(v);                  //在 for(auto e : s)中
+            std::vector<vertex_id> ret;                                               //再     vertex_id v = e.opposite_vertex();
             ret.reserve(edges.size());
             for(edge_ref_t e : edges)
             {
@@ -341,9 +372,9 @@ namespace lzhlib
         {
             assert(adjacent(x, y));
             if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
-                return get_edge_impl(x, y);
+                return get_vertex(x).associated_edge(y);
             else
-                return get_edge_impl(y, x);
+                return get_vertex(y).associated_edge(x);
         }
         pair_t get_associated_vertices(edge_id e) const
         {
@@ -397,45 +428,6 @@ namespace lzhlib
             return edge_repository.get_stock(e.id());
         }
 
-        bool adjacent_impl(vertex_id x, vertex_id y) const
-        {
-            std::set<edge_ref_t> const& edges = get_vertex(x).associated_edges();
-            for(edge_ref_t r : edges)
-            {
-                if(r.is_connected(y))
-                    return true;
-            }
-            return false;
-        }
-        vertex_id get_opposite_vertex(vertex_id v, edge_id e) const
-        {
-            pair_t vertices = get_edge(e).get_associated_vertices();
-            if(vertices.first == v)
-            {
-                return vertices.second;
-            }
-            else
-            {
-                assert(vertices.second == v);
-                return vertices.first;
-            }
-        }
-        void remove_edge_from(edge_id e, vertex_id v)
-        {
-            get_vertex(get_opposite_vertex(v, e)).remove_associated_edge(e);
-            edge_repository.remove_stock(e);
-        }
-        edge_id get_edge_impl(vertex_id x, vertex_id y) const
-        {
-            std::set<edge_ref_t> const& edges = get_vertex(x).associated_edges();
-            for(edge_ref_t e : edges)
-            {
-                if(e.is_connected(y))
-                    return e.associated_edge();
-            }
-            exceptions::throw_exception_require_edge_that_does_not_exist(x, y);
-        }
-
         repository<vertex_t> vertex_repository;
         repository<edge_t> edge_repository;
     };
@@ -456,8 +448,8 @@ namespace lzhlib
 
         bool adjacent(vertex_id x, vertex_id y) const;
 
-           protected:
-               vertex_t& get_vertex(vertex_id v)
+    protected:
+        vertex_t& get_vertex(vertex_id v)
         {
             return vertex_repository.get_stock(v.id());
         }
