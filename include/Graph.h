@@ -298,9 +298,8 @@ namespace lzhlib
         };
     }
 
-
     template <class VertexValueT, class EdgeValueT>
-    class undirected_graph
+    class graph_base
     {
     public:
         using vertex_t = detail::vertex<VertexValueT>;
@@ -310,22 +309,13 @@ namespace lzhlib
         using edge_value_t = typename edge_t::edge_value_t;
         using pair_t = typename edge_t::pair_t;
 
-        bool adjacent(vertex_id x, vertex_id y) const
-        {
-            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
-                return get_vertex(x).adjacent(y);
-            else
-                return get_vertex(y).adjacent(x);
-        }
         std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = graph.associated_edges(v);
         {
             std::set<edge_ref_t> const& edges = associated_edges(v);                  //在 for(auto e : s)中
             std::vector<vertex_id> ret;                                               //再     vertex_id v = e.opposite_vertex();
             ret.reserve(edges.size());
             for(edge_ref_t e : edges)
-            {
                 ret.push_back(e.opposite_vertex());
-            }
             return ret;
         }
         std::set<edge_ref_t>const& associated_edges(vertex_id v) const
@@ -337,45 +327,11 @@ namespace lzhlib
         {
             return vertex_repository.add_stock(std::forward<Args>(args)...);
         }
-        void remove_vertex(vertex_id v)
-        {
-            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges();
-            for(edge_ref_t e : edges)
-            {
-                get_vertex(e.opposite_vertex()).remove_associated_edge(e);
-                edge_repository.remove_stock(e.associated_edge());
-            }
-            vertex_repository.remove_stock(v);
-        }
-        template <class ...Args>
-        edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
-        {
-            edge_id result = edge_repository.add_stock(std::forward<Args>(args)...);
-            get_edge(result).set_associated_vertices(x, y);
-            get_vertex(x).add_associated_edge( {result, y});
-            get_vertex(y).add_associated_edge( {result, x});
-            return result;
-        }
         void remove_edge(vertex_id x, vertex_id y)
         {
-            remove_edge(get_edge(x, y));
-        }
-        void remove_edge(edge_id e)
-        {
-            pair_t vertices = get_edge(e).get_associated_vertices();
-            get_vertex(vertices.first).remove_associated_edge( {e, vertices.second});
-            get_vertex(vertices.second).remove_associated_edge( {e, vertices.first});
-            edge_repository.remove_stock(e.id());
+            remove_edge(get_edge(x, y));     // written in derived class
         }
 
-        edge_id get_edge(vertex_id x, vertex_id y) const
-        {
-            assert(adjacent(x, y));
-            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
-                return get_vertex(x).associated_edge(y);
-            else
-                return get_vertex(y).associated_edge(x);
-        }
         pair_t get_associated_vertices(edge_id e) const
         {
             return get_edge(e).get_associated_vertices();
@@ -433,11 +389,69 @@ namespace lzhlib
     };
 
 
-
     template <class VertexValueT, class EdgeValueT>
-    class directed_graph
+    class undirected_graph:public graph_base<VertexValueT, EdgeValueT>
     {
     public:
+        using base = graph_base<VertexValueT, EdgeValueT>;
+        using vertex_t = detail::vertex<VertexValueT>;
+        using vertex_value_t = typename vertex_t::vertex_value_t;
+        using edge_ref_t = typename vertex_t::edge_ref;
+        using edge_t = detail::edge<EdgeValueT>;
+        using edge_value_t = typename edge_t::edge_value_t;
+        using pair_t = typename edge_t::pair_t;
+
+        bool adjacent(vertex_id x, vertex_id y) const
+        {
+            if(base::get_vertex(x).associated_edges().size() < base::get_vertex(y).associated_edges().size())
+                return base::get_vertex(x).adjacent(y);
+            else
+                return base::get_vertex(y).adjacent(x);
+        }
+        void remove_vertex(vertex_id v)
+        {
+            std::set<edge_ref_t> const& edges = base::get_vertex(v).get_associated_edges();
+            for(edge_ref_t e : edges)
+            {
+                base::get_vertex(e.opposite_vertex()).remove_associated_edge(e);
+                base::edge_repository.remove_stock(e.associated_edge());
+            }
+            base::vertex_repository.remove_stock(v);
+        }
+        template <class ...Args>
+        edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
+        {
+            edge_id result = base::edge_repository.add_stock(std::forward<Args>(args)...);
+            base::get_edge(result).set_associated_vertices(x, y);
+            base::get_vertex(x).add_associated_edge( {result, y});
+            base::get_vertex(y).add_associated_edge( {result, x});
+            return result;
+        }
+        void remove_edge(edge_id e)
+        {
+            pair_t vertices = base::get_edge(e).get_associated_vertices();
+            base::get_vertex(vertices.first).remove_associated_edge( {e, vertices.second});
+            base::get_vertex(vertices.second).remove_associated_edge( {e, vertices.first});
+            base::edge_repository.remove_stock(e.id());
+        }
+
+        edge_id get_edge(vertex_id x, vertex_id y) const
+        {
+            assert(adjacent(x, y));
+            if(base::get_vertex(x).associated_edges().size() < base::get_vertex(y).associated_edges().size())
+                return base::get_vertex(x).associated_edge(y);
+            else
+                return base::get_vertex(y).associated_edge(x);
+        }
+    };
+
+
+
+    template <class VertexValueT, class EdgeValueT>
+    class directed_graph:public graph_base<VertexValueT, EdgeValueT>
+    {
+    public:
+        using base = graph_base<VertexValueT, EdgeValueT>;
         using vertex_t = detail::vertex<VertexValueT>;
         using vertex_value_t = typename vertex_t::vertex_value_t;
         using edge_ref_t = typename vertex_t::edge_ref;
@@ -448,118 +462,37 @@ namespace lzhlib
 
         bool adjacent(vertex_id x, vertex_id y) const
         {
-            return get_vertex(x).adjacent(y);
-        }
-        std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = graph.associated_edges(v);
-        {
-            std::set<edge_ref_t> const& edges = associated_edges(v);                  //在 for(auto e : s)中
-            std::vector<vertex_id> ret;                                               //再     vertex_id v = e.opposite_vertex();
-            ret.reserve(edges.size());
-            for(edge_ref_t e : edges)
-            {
-                ret.push_back(e.opposite_vertex());
-            }
-            return ret;
-        }
-        std::set<edge_ref_t>const& associated_edges(vertex_id v) const
-        {
-            return get_vertex(v).get_associated_edges();
-        }
-        template <class ...Args>
-        vertex_id add_vertex(Args&&...args)
-        {
-            return vertex_repository.add_stock(std::forward<Args>(args)...);
+            return base::get_vertex(x).adjacent(y);
         }
         void remove_vertex(vertex_id v)
         {
-            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges();
+            std::set<edge_ref_t> const& edges = base::get_vertex(v).get_associated_edges();
             for(edge_ref_t e : edges)
             {
-                edge_repository.remove_stock(e.associated_edge());
+                base::edge_repository.remove_stock(e.associated_edge());
             }
-            vertex_repository.remove_stock(v);
+            base::vertex_repository.remove_stock(v);
         }
         template <class ...Args>
         edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
         {
-            edge_id result = edge_repository.add_stock(std::forward<Args>(args)...);
-            get_edge(result).set_associated_vertices(x, y);
-            get_vertex(x).add_associated_edge( {result, y});
+            edge_id result = base::edge_repository.add_stock(std::forward<Args>(args)...);
+            base::get_edge(result).set_associated_vertices(x, y);
+            base::get_vertex(x).add_associated_edge( {result, y});
             return result;
-        }
-        void remove_edge(vertex_id x, vertex_id y)
-        {
-            remove_edge(get_edge(x, y));
         }
         void remove_edge(edge_id e)
         {
-            pair_t vertices = get_edge(e).get_associated_vertices();
-            get_vertex(vertices.first).remove_associated_edge( {e, vertices.second});
-            edge_repository.remove_stock(e.id());
+            pair_t vertices = base::get_edge(e).get_associated_vertices();
+            base::get_vertex(vertices.first).remove_associated_edge( {e, vertices.second});
+            base::edge_repository.remove_stock(e.id());
         }
 
         edge_id get_edge(vertex_id x, vertex_id y) const
         {
             assert(adjacent(x, y));
-            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
-                return get_vertex(x).associated_edge(y);
-            else
-                return get_vertex(y).associated_edge(x);
+            return base::get_vertex(x).associated_edge(y);
         }
-        pair_t get_associated_vertices(edge_id e) const
-        {
-            return get_edge(e).get_associated_vertices();
-        }
-
-        vertex_value_t& value(vertex_id v)
-        {
-            return get_vertex(v).vertex_value();
-        }
-        vertex_value_t const& value(vertex_id v) const
-        {
-            return get_vertex(v).vertex_value();
-        }
-        edge_value_t& value(edge_id e)
-        {
-            return get_edge(e).edge_value();
-        }
-        edge_value_t const& value(edge_id e) const
-        {
-            return get_edge(e).edge_value();
-        }
-
-        vertex_id first_vertex() const
-        {
-            return vertex_repository.first_stock();
-        }
-        bool is_last_vertex(vertex_id id) const
-        {
-            return vertex_repository.is_last_stock(id);
-        }
-        vertex_id next_vertex(vertex_id id) const
-        {
-            return vertex_repository.next_stock(id);
-        }
-    protected:
-        vertex_t& get_vertex(vertex_id v)
-        {
-            return vertex_repository.get_stock(v.id());
-        }
-        vertex_t const& get_vertex(vertex_id v) const
-        {
-            return vertex_repository.get_stock(v.id());
-        }
-        edge_t& get_edge(edge_id e)
-        {
-            return edge_repository.get_stock(e.id());
-        }
-        edge_t const& get_edge(edge_id e) const
-        {
-            return edge_repository.get_stock(e.id());
-        }
-
-        repository<vertex_t> vertex_repository;
-        repository<edge_t> edge_repository;
     };
 }
 

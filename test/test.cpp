@@ -119,42 +119,76 @@ class test_undirected_graph
 public:
     void operator()()
     {
+        undirected_graph<std::string, std::string> g;
+        vertex_id v0 = g.add_vertex("v0");
+        vertex_id v1 = g.add_vertex("v1");
         {
-            undirected_graph<std::string, std::string> g;
-            vertex_id v0 = g.add_vertex("v0");
-            vertex_id v1 = g.add_vertex("v1");
-            {
-                edge_id e0 = g.add_edge(v0, v1);
-                assert(g.value(e0) == "");
-                g.value(e0) = "e0";
-                assert(g.adjacent(v0, v1));
-                assert(g.adjacent(v1, v0));
-                assert(g.get_edge(v0, v1) == e0);
-                assert(g.get_edge(v1, v0) == e0);
-                assert(g.value(v0) == "v0");
-                assert(g.value(v1) == "v1");
-                assert(g.value(e0) == "e0");
+            edge_id e0 = g.add_edge(v0, v1);
+            assert(g.value(e0) == "");
+            g.value(e0) = "e0";
+            assert(g.adjacent(v0, v1));
+            assert(g.adjacent(v1, v0));
+            assert(g.get_edge(v0, v1) == e0);
+            assert(g.get_edge(v1, v0) == e0);
+            assert(g.value(v0) == "v0");
+            assert(g.value(v1) == "v1");
+            assert(g.value(e0) == "e0");
 
-                g.remove_edge(e0);
-                assert(!g.adjacent(v0, v1));
-                assert(!g.adjacent(v1, v0));
-            }
-            {
-                edge_id e1 = g.add_edge(v0, v1, "e1");
-                assert(g.value(e1) == "e1");
-                assert(g.adjacent(v0, v1));
-                assert(g.adjacent(v1, v0));
-                assert(g.get_edge(v0, v1) == e1);
-                assert(g.get_edge(v1, v0) == e1);
+            g.remove_edge(e0);
+            assert(!g.adjacent(v0, v1));
+            assert(!g.adjacent(v1, v0));
+        }
+        {
+            edge_id e1 = g.add_edge(v0, v1, "e1");
+            assert(g.value(e1) == "e1");
+            assert(g.adjacent(v0, v1));
+            assert(g.adjacent(v1, v0));
+            assert(g.get_edge(v0, v1) == e1);
+            assert(g.get_edge(v1, v0) == e1);
 
-                g.remove_edge(e1);
-                assert(!g.adjacent(v0, v1));
-                assert(!g.adjacent(v1, v0));
-            }
+            g.remove_edge(e1);
+            assert(!g.adjacent(v0, v1));
+            assert(!g.adjacent(v1, v0));
         }
     }
 private:
 };
+
+void test_directed_graph()
+{
+
+    directed_graph<std::string, std::string> g;
+    vertex_id v0 = g.add_vertex("v0");
+    vertex_id v1 = g.add_vertex("v1");
+    {
+        edge_id e0 = g.add_edge(v0, v1);
+        assert(g.value(e0) == "");
+        g.value(e0) = "e0";
+        assert(g.adjacent(v0, v1));
+        assert(!g.adjacent(v1, v0));
+        assert(g.get_edge(v0, v1) == e0);
+        //assert(g.get_edge(v1, v0) == e0);
+        assert(g.value(v0) == "v0");
+        assert(g.value(v1) == "v1");
+        assert(g.value(e0) == "e0");
+
+        g.remove_edge(e0);
+        assert(!g.adjacent(v0, v1));
+        assert(!g.adjacent(v1, v0));
+    }
+    {
+        edge_id e1 = g.add_edge(v0, v1, "e1");
+        assert(g.value(e1) == "e1");
+        assert(g.adjacent(v0, v1));
+        assert(!g.adjacent(v1, v0));
+        assert(g.get_edge(v0, v1) == e1);
+        //assert(g.get_edge(v1, v0) == e1);
+
+        g.remove_edge(e1);
+        assert(!g.adjacent(v0, v1));
+        assert(!g.adjacent(v1, v0));
+    }
+}
 int main()
 {
     test_vertex();
@@ -162,6 +196,7 @@ int main()
     test_vertex_repository();
     test_vertex_edge_and_repository();
     test_undirected_graph()();
+    test_directed_graph();
     cout << "Success!成功" << endl;
     return 0;
 }
