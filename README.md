@@ -1,5 +1,5 @@
 # Graph
-这个项目提供 数据结构--图 的一个实现,同时提供一部分图的算法.它被设计为在安全与效率中取得平衡.
+这个项目提供 数据结构--[图](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)) 的一个实现,同时提供一部分图的算法.它被设计为在安全与效率中取得平衡.
 
 目前源文件为./test/test.cpp ,头文件在./include下.
 
