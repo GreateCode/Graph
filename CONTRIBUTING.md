@@ -19,8 +19,8 @@ scope的结束花括号应当放在独立的新的一行,与对应的起始花�
 其余的成员按 public protected private的顺序出现,其中成员变量尽量放在成员函数之后.
 #####指针,引用与const
 最底层的const放置在右侧.
-有const时,const右侧的*或&向左与const贴紧.
-无const时,*或&向右与标识符贴紧.
+有const时,const右侧的 * 或&向左与const贴紧.
+无const时, * 或&向右与标识符贴紧.
 例子如下:
 
     int *p0 = nullptr;
