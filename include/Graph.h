@@ -234,7 +234,7 @@ namespace lzhlib
 				vertices.first = vertices.second = invalid_vertex_id;
 			}
 		private:
-			pair_t vertices;
+			pair_t vertices;   //对于 undirected graph,vertices.first 与vertices.second 的地位相同.对于directed graph,vertices.first为边的起点,vertices.second为边的终点.
 		};
 		template <class EdgeValueT>
 		class edge: public edge<null_value_tag>
@@ -436,6 +436,43 @@ namespace lzhlib
 			exceptions::throw_exception_require_edge_that_does_not_exist(x, y);
 		}
 
+		repository<vertex_t> vertex_repository;
+		repository<edge_t> edge_repository;
+	};
+	
+	
+	
+	template <class VertexValueT, class EdgeValueT>
+	class directed_graph
+	{
+	public:
+		using vertex_t = detail::vertex<VertexValueT>;
+		using vertex_value_t = typename vertex_t::vertex_value_t;
+		using edge_ref_t = typename vertex_t::edge_ref;
+		using edge_t = detail::edge<EdgeValueT>;
+		using edge_value_t = typename edge_t::edge_value_t;
+		using pair_t = typename edge_t::pair_t;
+		
+		
+		bool adjacent(vertex_id x, vertex_id y) const;
+		
+	protected:
+		vertex_t& get_vertex(vertex_id v)
+		{
+			return vertex_repository.get_stock(v.id());
+		}
+		vertex_t const& get_vertex(vertex_id v) const
+		{
+			return vertex_repository.get_stock(v.id());
+		}
+		edge_t& get_edge(edge_id e)
+		{
+			return edge_repository.get_stock(e.id());
+		}
+		edge_t const& get_edge(edge_id e) const
+		{
+			return edge_repository.get_stock(e.id());
+		}
 		repository<vertex_t> vertex_repository;
 		repository<edge_t> edge_repository;
 	};
