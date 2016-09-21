@@ -446,8 +446,100 @@ namespace lzhlib
         using pair_t = typename edge_t::pair_t;
 
 
-        bool adjacent(vertex_id x, vertex_id y) const;
+        bool adjacent(vertex_id x, vertex_id y) const
+        {
+            return get_vertex(x).adjacent(y);
+        }
+        std::vector<vertex_id> neighbors(vertex_id v) const                           //不如让用户 auto const& s = graph.associated_edges(v);
+        {
+            std::set<edge_ref_t> const& edges = associated_edges(v);                  //在 for(auto e : s)中
+            std::vector<vertex_id> ret;                                               //再     vertex_id v = e.opposite_vertex();
+            ret.reserve(edges.size());
+            for(edge_ref_t e : edges)
+            {
+                ret.push_back(e.opposite_vertex());
+            }
+            return ret;
+        }
+        std::set<edge_ref_t>const& associated_edges(vertex_id v) const
+        {
+            return get_vertex(v).get_associated_edges();
+        }
+        template <class ...Args>
+        vertex_id add_vertex(Args&&...args)
+        {
+            return vertex_repository.add_stock(std::forward<Args>(args)...);
+        }
+        void remove_vertex(vertex_id v)
+        {
+            std::set<edge_ref_t> const& edges = get_vertex(v).get_associated_edges();
+            for(edge_ref_t e : edges)
+            {
+                edge_repository.remove_stock(e.associated_edge());
+            }
+            vertex_repository.remove_stock(v);
+        }
+        template <class ...Args>
+        edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
+        {
+            edge_id result = edge_repository.add_stock(std::forward<Args>(args)...);
+            get_edge(result).set_associated_vertices(x, y);
+            get_vertex(x).add_associated_edge( {result, y});
+            return result;
+        }
+        void remove_edge(vertex_id x, vertex_id y)
+        {
+            remove_edge(get_edge(x, y));
+        }
+        void remove_edge(edge_id e)
+        {
+            pair_t vertices = get_edge(e).get_associated_vertices();
+            get_vertex(vertices.first).remove_associated_edge( {e, vertices.second});
+            edge_repository.remove_stock(e.id());
+        }
 
+        edge_id get_edge(vertex_id x, vertex_id y) const
+        {
+            assert(adjacent(x, y));
+            if(get_vertex(x).associated_edges().size() < get_vertex(y).associated_edges().size())
+                return get_vertex(x).associated_edge(y);
+            else
+                return get_vertex(y).associated_edge(x);
+        }
+        pair_t get_associated_vertices(edge_id e) const
+        {
+            return get_edge(e).get_associated_vertices();
+        }
+
+        vertex_value_t& value(vertex_id v)
+        {
+            return get_vertex(v).vertex_value();
+        }
+        vertex_value_t const& value(vertex_id v) const
+        {
+            return get_vertex(v).vertex_value();
+        }
+        edge_value_t& value(edge_id e)
+        {
+            return get_edge(e).edge_value();
+        }
+        edge_value_t const& value(edge_id e) const
+        {
+            return get_edge(e).edge_value();
+        }
+
+        vertex_id first_vertex() const
+        {
+            return vertex_repository.first_stock();
+        }
+        bool is_last_vertex(vertex_id id) const
+        {
+            return vertex_repository.is_last_stock(id);
+        }
+        vertex_id next_vertex(vertex_id id) const
+        {
+            return vertex_repository.next_stock(id);
+        }
     protected:
         vertex_t& get_vertex(vertex_id v)
         {
@@ -465,6 +557,7 @@ namespace lzhlib
         {
             return edge_repository.get_stock(e.id());
         }
+
         repository<vertex_t> vertex_repository;
         repository<edge_t> edge_repository;
     };

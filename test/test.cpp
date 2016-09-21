@@ -113,6 +113,7 @@ void test_vertex_edge_and_repository()
     auto const& s1 = rv.get_stock(v1).associated_edges();
     assert(s1.find( {e0,v0}) != s1.end());
 }
+
 class test_undirected_graph
 {
 public:
