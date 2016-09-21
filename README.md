@@ -9,7 +9,7 @@
 
 例:
 
-    lzhlib::undirected_graph<std::string, std::string> graph;
+    lzhlib::undirected_graph<std::string, std::string> g;
     vertex_id v0 = g.add_vertex("v0");
     vertex_id v1 = g.add_vertex("v1");
     {
