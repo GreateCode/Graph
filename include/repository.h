@@ -90,9 +90,9 @@ namespace lzhlib
         {
             return *ids_of_living_stocks.begin();
         }
-        bool is_last_stock(id_t current_stock) const
+        bool stock_end(id_t current_stock) const
         {
-            return ++(ids_of_living_stocks.find(current_stock)) == ids_of_living_stocks.end();
+            return ids_of_living_stocks.find(current_stock) == ids_of_living_stocks.end();
         }
         id_t next_stock(id_t current_stock) const
         {

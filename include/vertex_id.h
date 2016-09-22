@@ -4,14 +4,9 @@
 namespace lzhlib
 {
 
-    namespace exceptions
-    {
-        class require_edge_that_does_not_exist;
-    }
     class vertex_id
     {
         friend struct invalid_vertex;
-        friend class exceptions::require_edge_that_does_not_exist; //for vertex_id::id()
     private:
         vertex_id(std::size_t i)
                 : id_ {i}
