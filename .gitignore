@@ -3,9 +3,11 @@ bin/
 obj/
 Debug/
 Release/
+/.idea
 *.depend
 *.layout
 *.mk
 *.project
 Graph.txt
 Makefile
+CMakeLists.txt
