@@ -12,7 +12,7 @@ using namespace lzhlib::detail;
 void test_vertex()
 {
     vertex<int> v{};
-    vertex<int>::edge_ref e1{1, vertex_id()}, e2{2, vertex_id()};
+    edge_ref e1{1, vertex_id()}, e2{2, vertex_id()};
     v.add_associated_edge(e1);
     auto s = v.associated_edges();
     assert(s.size() == 1);
@@ -134,6 +134,8 @@ public:
             assert(g.value(e0) == "");
             assert(g.get_edge(v0, v1) == e0);
             g.value(e0) = "e0";
+            assert(g.associated(v0, e0));
+            assert(g.associated(v1, e0));
             assert(g.adjacent(v0, v1));
             assert(g.adjacent(v1, v0));
             assert(g.get_edge(v0, v1) == e0);
@@ -175,21 +177,29 @@ public:
             assert(vertices0 == vertices1);
 
             g.remove_edge(e0);
+            assert(!g.associated(v0, e0));
+            assert(!g.associated(v1, e0));
             assert(!g.adjacent(v0, v1));
             assert(!g.adjacent(v1, v0));
         }
         {
             edge_id e1 = g.add_edge(v0, v1, "e1");
             assert(g.value(e1) == "e1");
+            assert(g.associated(v0, e1));
+            assert(g.associated(v1, e1));
             assert(g.adjacent(v0, v1));
             assert(g.adjacent(v1, v0));
             assert(g.get_edge(v0, v1) == e1);
             assert(g.get_edge(v1, v0) == e1);
 
             g.remove_edge(v0, v1);
+            assert(!g.associated(v0, e1));
+            assert(!g.associated(v1, e1));
             assert(!g.adjacent(v0, v1));
             assert(!g.adjacent(v1, v0));
         }
+        g.remove_vertex(v0);
+        g.remove_vertex(v1);
     }
 
 private:
@@ -206,6 +216,8 @@ void test_directed_graph()
         assert(g.value(e0) == "");
         assert(g.get_edge(v0, v1) == e0);
         g.value(e0) = "e0";
+        assert(g.associated(v0, e0));
+        assert(!g.associated(v1, e0));
         assert(g.adjacent(v0, v1));
         assert(!g.adjacent(v1, v0));
         assert(g.get_edge(v0, v1) == e0);
@@ -248,6 +260,8 @@ void test_directed_graph()
         }
 
         g.remove_edge(e0);
+        assert(!g.associated(v0, e0));
+        assert(!g.associated(v1, e0));
         assert(!g.adjacent(v0, v1));
         assert(!g.adjacent(v1, v0));
         {
@@ -259,12 +273,14 @@ void test_directed_graph()
             //assert(g.get_edge(v1, v0) != e1);
 
             g.remove_edge(v0, v1);
+            assert(!g.associated(v0, e0));
+            assert(!g.associated(v1, e0));
             assert(!g.adjacent(v0, v1));
             assert(!g.adjacent(v1, v0));
         }
-
     }
-
+    g.remove_vertex(v0);
+    g.remove_vertex(v1);
 }
 
 int main()

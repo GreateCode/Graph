@@ -54,6 +54,57 @@ namespace lzhlib
     class null_value_tag;
     namespace detail
     {
+        class edge_ref
+        {
+        public:
+            edge_id associated_edge() const
+            {
+                return edge_;
+            }
+            vertex_id opposite_vertex() const
+            {
+                return vertex_;
+            }
+            bool is_connected(vertex_id v) const
+            {
+                return vertex_ == v;
+            }
+
+            bool operator<(edge_ref rhs) const  //默认忽略opposite_vertex()
+            {
+                return edge_ < rhs.edge_;
+            }
+            bool operator==(edge_ref rhs) const
+            {
+                return edge_ == rhs.edge_;
+            }
+            bool operator!=(edge_ref rhs) const
+            {
+                return !(*this == rhs);
+            }
+
+        private:
+            edge_id edge_;
+            vertex_id vertex_;
+        };
+
+        bool operator<(edge_ref r, edge_id rhs)
+        {
+            return r.associated_edge() < rhs;
+        }
+        bool operator<(edge_id rhs, edge_ref r)
+        {
+            return rhs < r.associated_edge();
+        }
+        bool operator<(edge_ref r, vertex_id rhs) //仍可依据opposite_vertex()来比较
+        {
+            return r.opposite_vertex() < rhs;
+        }
+        bool operator<(vertex_id rhs, edge_ref r) //仍可依据opposite_vertex()来比较
+        {
+            return rhs < r.opposite_vertex();
+        }
+
 
         template<class VertexValueT = null_value_tag>
         class vertex;
@@ -65,47 +116,11 @@ namespace lzhlib
         public:
             using vertex_value_t = null_value_tag;
 
-            class edge_ref
-            {
-            public:
-                edge_id associated_edge() const
-                {
-                    return edge_;
-                }
-                vertex_id opposite_vertex() const
-                {
-                    return vertex_;
-                }
-                bool is_connected(vertex_id v) const
-                {
-                    return vertex_ == v;
-                }
-
-                bool operator<(edge_ref rhs) const
-                {
-                    return edge_ < rhs.edge_;
-                }
-
-                bool operator==(edge_ref rhs) const
-                {
-                    return edge_ == rhs.edge_;
-                }
-
-                bool operator!=(edge_ref rhs) const
-                {
-                    return !(*this == rhs);
-                }
-
-            private:
-                edge_id edge_;
-                vertex_id vertex_;
-            };
-
 //            bool is_associated(edge_id i)
 //            {
 //                return edges.find(i)!=edges.end();            //a possibly more efficent way :ask edge for this
 //            }
-            std::set<edge_ref> const& associated_edges() const
+            auto const& associated_edges() const
             {
                 return edges;
             }
@@ -120,28 +135,22 @@ namespace lzhlib
 
             bool adjacent(vertex_id v) const
             {
-                std::set<edge_ref> const& edges = associated_edges();
-                for (edge_ref r : edges)
-                {
-                    if (r.is_connected(v))
-                        return true;
-                }
+                auto const& edges = associated_edges();
+                if (edges.find(v) != edges.end())
+                    return true;
                 return false;
             }
             bool associated(edge_id e) const
             {
-                std::set<edge_ref> const& edges = associated_edges();
-                for (edge_ref r : edges)
-                {
-                    if (r.associated_edge() == e)
-                        return true;
-                }
+                auto const& edges = associated_edges();
+                if (edges.find(e) != edges.end())
+                    return true;
                 return false;
             }
 
             edge_id associated_edge(vertex_id y) const
             {
-                std::set<edge_ref> const& edges = associated_edges();
+                auto const& edges = associated_edges();
                 for (edge_ref e : edges)
                 {
                     if (e.is_connected(y))
@@ -151,7 +160,7 @@ namespace lzhlib
             }
 
         private:
-            std::set<edge_ref> edges;
+            std::set<edge_ref, std::less<void>> edges;  //for std::less<void>::is_transparent  --> for comparision between differnet types
         };
 
         template<class VertexValueT>
@@ -260,21 +269,25 @@ namespace lzhlib
     public:
         using vertex_t = detail::vertex<VertexValueT>;
         using vertex_value_t = typename vertex_t::vertex_value_t;
-        using edge_ref_t = typename vertex_t::edge_ref;
+        using edge_ref_t = typename detail::edge_ref;
         using edge_t = detail::edge<EdgeValueT>;
         using edge_value_t = typename edge_t::edge_value_t;
         using pair_t = typename edge_t::pair_t;
 
+        bool associated(vertex_id v, edge_id e)
+        {
+            return get_vertex(v).associated(e);
+        }
         std::vector<vertex_id> neighbors(vertex_id v) const              //不如让用户 auto const& s = graph.associated_edges(v);
         {
-            std::set<edge_ref_t> const& edges = associated_edges(v);     //在 for(auto e : s)中
+            auto const& edges = associated_edges(v);     //在 for(auto e : s)中
             std::vector<vertex_id> ret;                                  //再     vertex_id v = e.opposite_vertex();
             ret.reserve(edges.size());
             for (edge_ref_t e : edges)
                 ret.push_back(e.opposite_vertex());
             return ret;
         }
-        std::set<edge_ref_t> const& associated_edges(vertex_id v) const  //比neighbors更建议使用(出于效率考虑)
+        auto const& associated_edges(vertex_id v) const  //比neighbors更建议使用(出于效率考虑)
         {
             return get_vertex(v).associated_edges();
         }
@@ -353,7 +366,7 @@ namespace lzhlib
         using base = graph_base<VertexValueT, EdgeValueT>;
         using vertex_t = detail::vertex<VertexValueT>;
         using vertex_value_t = typename vertex_t::vertex_value_t;
-        using edge_ref_t = typename vertex_t::edge_ref;
+        using edge_ref_t = typename detail::edge_ref;
         using edge_t = detail::edge<EdgeValueT>;
         using edge_value_t = typename edge_t::edge_value_t;
         using pair_t = typename edge_t::pair_t;
@@ -369,7 +382,7 @@ namespace lzhlib
 
         void remove_vertex(vertex_id v)
         {
-            std::set<edge_ref_t> const& edges = base::get_vertex(v).associated_edges();
+            auto const& edges = base::get_vertex(v).associated_edges();
             for (edge_ref_t e : edges)
             {
                 base::get_vertex(e.opposite_vertex()).remove_associated_edge(e);
@@ -418,7 +431,7 @@ namespace lzhlib
         using base = graph_base<VertexValueT, EdgeValueT>;
         using vertex_t = detail::vertex<VertexValueT>;
         using vertex_value_t = typename vertex_t::vertex_value_t;
-        using edge_ref_t = typename vertex_t::edge_ref;
+        using edge_ref_t = typename detail::edge_ref;
         using edge_t = detail::edge<EdgeValueT>;
         using edge_value_t = typename edge_t::edge_value_t;
         using pair_t = typename edge_t::pair_t;
@@ -431,7 +444,7 @@ namespace lzhlib
 
         void remove_vertex(vertex_id v)
         {
-            std::set<edge_ref_t> const& edges = base::get_vertex(v).associated_edges();
+            auto const& edges = base::get_vertex(v).associated_edges();
             for (edge_ref_t e : edges)
             {
                 base::edge_repository.remove_stock(e.associated_edge().id());
