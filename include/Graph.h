@@ -1,11 +1,13 @@
 #ifndef GRAPH_H_INCLUDED
 #define GRAPH_H_INCLUDED
-#include "Graph/include/repository.h"
 #include <vector>
 #include <set>
 #include <string>
 #include <exception>
 #include <cassert>
+#include "Graph/include/repository.h"
+#include "Graph/include/vertex_id.h"
+#include "Graph/include/edge_id.h"
 /** \file
  *  \brief 本文件提供与 [图](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) 有关的抽象.
  *
@@ -29,73 +31,6 @@ Structures that associate values to the edges usually also provide:
  */
 namespace lzhlib
 {
-    namespace exceptions
-    {
-        class require_edge_that_does_not_exist;
-    }
-    class vertex_id
-    {
-        friend struct invalid_vertex;
-        friend class exceptions::require_edge_that_does_not_exist; //for vertex_id::id()
-    private:
-        vertex_id(std::size_t i)
-            : id_ {i}
-        {}
-        vertex_id(stock_id i)
-            : id_(i)
-        {}
-    public:
-        vertex_id() = default;
-        bool operator<(vertex_id rhs) const
-        {
-            return id_ < rhs.id_;
-        }
-        bool operator==(vertex_id rhs) const
-        {
-            return id_ == rhs.id_;
-        }
-    private:
-        auto id() const noexcept
-        {
-            return id_;
-        }
-        stock_id id_ {static_cast<std::size_t>(-1)};
-    };
-    struct invalid_vertex
-    {
-        static constexpr vertex_id id {};
-    };
-    constexpr vertex_id invalid_vertex_id = invalid_vertex::id;
-    class edge_id
-    {
-    private:
-        edge_id() = default;
-        edge_id(std::size_t i)
-            : id_ {i}
-        {}
-        edge_id(stock_id i)
-            : id_(i)
-        {}
-    public:
-        bool operator<(edge_id rhs) const
-        {
-            return id_ < rhs.id_;
-        }
-        bool operator==(edge_id rhs) const
-        {
-            return id_ == rhs.id_;
-        }
-        bool operator!=(edge_id rhs) const
-        {
-            return !(*this == rhs);
-        }
-    private:
-        auto id() const noexcept
-        {
-            return id_;
-        }
-        stock_id id_;
-    };
 
     namespace exceptions
     {

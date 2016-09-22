@@ -6,26 +6,9 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include "Graph/include/stock_id.h"
 namespace lzhlib
 {
-    class stock_id
-    {
-    public:
-        bool operator<(stock_id rhs) const
-        {
-            return id_ < rhs.id_;
-        }
-        bool operator==(stock_id rhs) const
-        {
-            return id_ == rhs.id_;
-        }
-        auto id() const noexcept
-        {
-            return id_;
-        }
-    private:
-        std::size_t id_;
-    };
     template <class StockT>
     class repository
     {
