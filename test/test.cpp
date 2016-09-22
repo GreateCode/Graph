@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 #define private public
-#include "Graph/include/Graph.h"
+#include "Graph/include/graph.h"
 using namespace std;
 using namespace lzhlib;
 using namespace lzhlib::detail;
