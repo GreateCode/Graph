@@ -101,7 +101,6 @@ void test_directed_graph()
         edge_id e0 = g.add_edge(v0, v1);
         assert(g.value(e0) == "");
         assert(g.get_edge(v0, v1) == e0);
-        g.value(e0) = "e0";
         assert(g.associated(v0, e0));
         assert(!g.associated(v1, e0));
         assert(g.adjacent(v0, v1));
@@ -112,16 +111,17 @@ void test_directed_graph()
         assert(const_cast<decltype(g)const&>(g).value(v0) == "v0");
         assert(g.value(v1) == "v1");
         assert(const_cast<decltype(g)const&>(g).value(v1) == "v1");
+        g.value(e0) = "e0";
         assert(g.value(e0) == "e0");
         assert(const_cast<decltype(g)const&>(g).value(e0) == "e0");
         {
-            auto vertex = g.neighbors(v0);
-            assert(vertex.size() == 1);
-            assert(vertex[0] == v1);
+            auto vertices = g.neighbors(v0);
+            assert(vertices.size() == 1);
+            assert(vertices[0] == v1);
         }
         {
-            auto vertex = g.neighbors(v1);
-            assert(vertex.empty());
+            auto vertices = g.neighbors(v1);
+            assert(vertices.empty());
         }
 
         {
