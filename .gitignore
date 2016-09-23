@@ -4,6 +4,7 @@ obj/
 Debug/
 Release/
 /.idea
+*.cbp
 *.depend
 *.layout
 *.mk
