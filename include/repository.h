@@ -1,15 +1,15 @@
 #ifndef REPOSITORY_H_INCLUDED
 #define REPOSITORY_H_INCLUDED
-#include <cstddef>    //for std::size_t
-#include <exception>
-#include <stdexcept>
-#include <vector>
-#include <memory>
-#include <set>
+
+#include <stdexcept>  //for std::out_of_range
+#include <vector>     //for std::vector
+#include <memory>     //for std::unique_ptr
+#include <set>        //for std::set
 #include "Graph/include/stock_id.h"
+
 namespace lzhlib
 {
-    template <class StockT>
+    template<class StockT>
     class repository
     {
     public:
@@ -17,29 +17,34 @@ namespace lzhlib
         using id_t = stock_id;
         using pointer_t = std::unique_ptr<stock_t>;
 
-        class attempt_to_use_unassigned_stock: public std::out_of_range
+        class attempt_to_use_unassigned_stock : public std::out_of_range
         {
         public:
             attempt_to_use_unassigned_stock(id_t id)
-                : out_of_range(std::string("Attempt to use unassigned stock which id is ") + std::to_string(id.id()) + "!")
+                : out_of_range(std::string("Attempt to use unassigned stock which id is ") +
+                               std::to_string(id.id()) + "!")
             {
 
             }
         };
-        class attempt_to_remove_nonexistent_stock: public std::out_of_range
+
+        class attempt_to_remove_nonexistent_stock : public std::out_of_range
         {
         public:
             attempt_to_remove_nonexistent_stock(id_t id)
-                : out_of_range(std::string("Attempt to use unremovable stock which id is ") + std::to_string(id.id()) + "!")
+                : out_of_range(std::string("Attempt to use unremovable stock which id is ") +
+                               std::to_string(id.id()) + "!")
             {
 
             }
         };
-        class attempt_to_reuse_unreusable_stock: public std::out_of_range
+
+        class attempt_to_reuse_unreusable_stock : public std::out_of_range
         {
         public:
             attempt_to_reuse_unreusable_stock(id_t id)
-                : out_of_range(std::string("Attempt to reuse unreusable stock which id is ") + std::to_string(id.id()) + "!")
+                : out_of_range(std::string("Attempt to reuse unreusable stock which id is ") +
+                               std::to_string(id.id()) + "!")
             {
             }
         };
@@ -47,7 +52,7 @@ namespace lzhlib
         stock_t& get_stock(id_t id)
         {
 #ifndef NDEBUG
-            if(is_not_found_in_living_stocks(id))
+            if (is_not_found_in_living_stocks(id))
             {
                 throw attempt_to_use_unassigned_stock(id);
             }
@@ -57,17 +62,17 @@ namespace lzhlib
         stock_t const& get_stock(id_t id) const
         {
 #ifndef NDEBUG
-            if(is_not_found_in_living_stocks(id))
+            if (is_not_found_in_living_stocks(id))
             {
                 throw attempt_to_use_unassigned_stock(id);
             }
 #endif // NDEBUG
             return *stocks[id.id()];
         }
-        template <class ...Args>
-        id_t add_stock(Args&&... args)
+        template<class ...Args>
+        id_t add_stock(Args&& ... args)
         {
-            if(no_reusable_stocks())
+            if (no_reusable_stocks())
             {
                 return allocate_stock(std::forward<Args>(args)...);
             }
@@ -79,7 +84,7 @@ namespace lzhlib
         void remove_stock(id_t id)
         {
 #ifndef NDEBUG
-            if(is_not_found_in_living_stocks(id))
+            if (is_not_found_in_living_stocks(id))
                 throw attempt_to_remove_nonexistent_stock(id);
 #endif // NDEBUG
             stocks[id.id()].reset();
@@ -109,16 +114,17 @@ namespace lzhlib
         {
             return ids_of_reusable_stocks.empty();
         }
-        template <class ...Args>
-        id_t allocate_stock(Args&&... args)
+        template<class ...Args>
+        id_t allocate_stock(Args&& ... args)
         {
             stocks.push_back(std::make_unique<stock_t>(std::forward<Args>(args)...));
-            id_t ret {stocks.size() - 1};    //the allocated stock is at the last position in the container.
+            id_t ret{stocks.size() -
+                     1};    //the allocated stock is at the last position in the container.
             ids_of_living_stocks.insert(ret);
             return ret;
         }
-        template <class ...Args>
-        id_t reuse_stock(Args&&... args)
+        template<class ...Args>
+        id_t reuse_stock(Args&& ... args)
         {
             typename std::set<id_t>::iterator i = iterator_of_a_reusable_stock();
             id_t ret = *i;
@@ -134,7 +140,7 @@ namespace lzhlib
         pointer_t& reusable_pointer(id_t id)          //just a checker.The calling may be optimized out -- that's to say, may be inlined.
         {
 #ifndef NDEBUG
-            if(is_not_found_in_reusable_stocks(id))
+            if (is_not_found_in_reusable_stocks(id))
             {
                 throw attempt_to_reuse_unreusable_stock(id);
             }

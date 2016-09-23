@@ -1,6 +1,13 @@
 
 #ifndef GRAPH_VERTEX_H
 #define GRAPH_VERTEX_H
+
+#include <functional>    //for std::less
+#include <set>           //for std::set
+#include <stdexcept>     //for std::logic_error
+#include "Graph/include/edge_id.h"
+#include "Graph/include/vertex_id.h"
+
 namespace lzhlib
 {
     namespace exceptions
@@ -9,12 +16,11 @@ namespace lzhlib
         {
         public:
             require_edge_that_does_not_exist()
-                    : std::logic_error(std::string("require edge that doesn't exist!"))
+                : std::logic_error(std::string("require edge that doesn't exist!"))
             {
 
             }
         };
-
     }
 
     class null_value_tag;
@@ -23,6 +29,9 @@ namespace lzhlib
         class edge_ref
         {
         public:
+            edge_ref(edge_id e, vertex_id opposite)
+                : edge_(e), vertex_(opposite)
+            {}
             edge_id edge() const
             {
                 return edge_;
@@ -54,19 +63,19 @@ namespace lzhlib
             vertex_id vertex_;
         };
 
-        bool operator<(edge_ref r, edge_id rhs)
+        inline bool operator<(edge_ref r, edge_id rhs)
         {
             return r.edge() < rhs;
         }
-        bool operator<(edge_id rhs, edge_ref r)
+        inline bool operator<(edge_id rhs, edge_ref r)
         {
             return rhs < r.edge();
         }
-        bool operator<(edge_ref r, vertex_id rhs) //仍可依据opposite_vertex()来比较
+        inline bool operator<(edge_ref r, vertex_id rhs) //仍可依据opposite_vertex()来比较
         {
             return r.opposite_vertex() < rhs;
         }
-        bool operator<(vertex_id rhs, edge_ref r) //仍可依据opposite_vertex()来比较
+        inline bool operator<(vertex_id rhs, edge_ref r) //仍可依据opposite_vertex()来比较
         {
             return rhs < r.opposite_vertex();
         }
@@ -138,7 +147,7 @@ namespace lzhlib
 
             template<class ...Args>
             vertex(Args&& ... args)
-                    : value(std::forward<Args>(args)...)
+                : value(std::forward<Args>(args)...)
             {
 
             }

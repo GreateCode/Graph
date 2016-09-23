@@ -2,8 +2,9 @@
 #ifndef GRAPH_EDGE_H
 #define GRAPH_EDGE_H
 
-#include <utility>
+#include <utility>    //for std::pair
 #include "Graph/include/vertex_id.h"
+
 namespace lzhlib
 {
     class null_value_tag;
@@ -49,7 +50,7 @@ namespace lzhlib
 
             template<class ...Args>
             edge(Args&& ...args)
-                    : value(std::forward<Args>(args)...)
+                : value(std::forward<Args>(args)...)
             {
             }
 
