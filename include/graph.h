@@ -57,7 +57,7 @@ namespace lzhlib
         class edge_ref
         {
         public:
-            edge_id associated_edge() const
+            edge_id edge() const
             {
                 return edge_;
             }
@@ -90,11 +90,11 @@ namespace lzhlib
 
         bool operator<(edge_ref r, edge_id rhs)
         {
-            return r.associated_edge() < rhs;
+            return r.edge() < rhs;
         }
         bool operator<(edge_id rhs, edge_ref r)
         {
-            return rhs < r.associated_edge();
+            return rhs < r.edge();
         }
         bool operator<(edge_ref r, vertex_id rhs) //仍可依据opposite_vertex()来比较
         {
@@ -128,9 +128,10 @@ namespace lzhlib
             {
                 edges.insert(i);
             }
-            void remove_associated_edge(edge_ref i)           //i.asociated_edge()对应的边将会移除.忽略i.opposite_vertex的值.
+            void remove_associated_edge(edge_id i)
             {
-                edges.erase(i);
+                auto to_be_erased = edges.find(i);
+                edges.erase(to_be_erased);
             }
 
             bool adjacent(vertex_id v) const
@@ -154,7 +155,7 @@ namespace lzhlib
                 for (edge_ref e : edges)
                 {
                     if (e.is_connected(y))
-                        return e.associated_edge();
+                        return e.edge();
                 }
                 exceptions::throw_exception_require_edge_that_does_not_exist();
             }
@@ -385,8 +386,8 @@ namespace lzhlib
             auto const& edges = base::get_vertex(v).associated_edges();
             for (edge_ref_t e : edges)
             {
-                base::get_vertex(e.opposite_vertex()).remove_associated_edge(e);
-                base::edge_repository.remove_stock(e.associated_edge().id());
+                base::get_vertex(e.opposite_vertex()).remove_associated_edge(e.edge());
+                base::edge_repository.remove_stock(e.edge().id());
             }
             base::vertex_repository.remove_stock(v.id());
         }
@@ -407,8 +408,8 @@ namespace lzhlib
         void remove_edge(edge_id e)
         {
             pair_t vertices = base::get_edge(e).associated_vertices();
-            base::get_vertex(vertices.first).remove_associated_edge({e, vertices.second});
-            base::get_vertex(vertices.second).remove_associated_edge({e, vertices.first});
+            base::get_vertex(vertices.first).remove_associated_edge(e);
+            base::get_vertex(vertices.second).remove_associated_edge(e);
             base::edge_repository.remove_stock(e.id());
         }
 
@@ -447,7 +448,7 @@ namespace lzhlib
             auto const& edges = base::get_vertex(v).associated_edges();
             for (edge_ref_t e : edges)
             {
-                base::edge_repository.remove_stock(e.associated_edge().id());
+                base::edge_repository.remove_stock(e.edge().id());
             }
             base::vertex_repository.remove_stock(v.id());
         }
@@ -467,7 +468,7 @@ namespace lzhlib
         void remove_edge(edge_id e)
         {
             pair_t vertices = base::get_edge(e).associated_vertices();
-            base::get_vertex(vertices.first).remove_associated_edge({e, vertices.second});
+            base::get_vertex(vertices.first).remove_associated_edge(e);
             base::edge_repository.remove_stock(e.id());
         }
 

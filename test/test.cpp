@@ -23,12 +23,12 @@ void test_vertex()
     assert(s.size() == 2);
     assert(s.find(e1) != s.end() && s.find(e2) != s.end());
 
-    v.remove_associated_edge(e1);
+    v.remove_associated_edge(e1.edge());
     s = v.associated_edges();
     assert(s.size() == 1);
     assert(s.find(e1) == s.end() && s.find(e2) != s.end());
 
-    v.remove_associated_edge(e2);
+    v.remove_associated_edge(e2.edge());
     s = v.associated_edges();
     assert(s.empty());
     assert(s.find(e1) == s.end() && s.find(e2) == s.end());
@@ -159,13 +159,13 @@ public:
             {
                 auto edge_refs = g.associated_edges(v0);
                 assert(edge_refs.size() == 1);
-                assert((*edge_refs.begin()).associated_edge() == e0);
+                assert((*edge_refs.begin()).edge() == e0);
                 assert((*edge_refs.begin()).opposite_vertex() == v1);
             }
             {
                 auto edge_refs = g.associated_edges(v1);
                 assert(edge_refs.size() == 1);
-                assert((*edge_refs.begin()).associated_edge() == e0);
+                assert((*edge_refs.begin()).edge() == e0);
                 assert((*edge_refs.begin()).opposite_vertex() == v0);
             }
             auto vertices = g.associated_vertices(e0);
@@ -241,7 +241,7 @@ void test_directed_graph()
         {
             auto edge_refs = g.associated_edges(v0);
             assert(edge_refs.size() == 1);
-            assert((*edge_refs.begin()).associated_edge() == e0);
+            assert((*edge_refs.begin()).edge() == e0);
             assert((*edge_refs.begin()).opposite_vertex() == v1);
         }
         {
