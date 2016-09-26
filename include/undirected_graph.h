@@ -42,8 +42,7 @@ namespace lzhlib
         template<class ...Args>
         edge_id add_edge(vertex_id x, vertex_id y, Args&& ...args)
         {
-            edge_id result = base::to_edge_id(base::edge_repository
-                                                  .add_stock(std::forward<Args>(args)...));
+            edge_id result = base::to_edge_id(base::edge_repository.add_stock(std::forward<Args>(args)...));
             base::get_edge(result).set_associated_vertices(x, y);
             base::get_vertex(x).add_associated_edge({result, y});
             base::get_vertex(y).add_associated_edge({result, x});
