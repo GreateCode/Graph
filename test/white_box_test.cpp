@@ -78,25 +78,6 @@ void test_vertex_repository()
                            std::to_string(i0.id()) + "!");
     }
 
-    auto i1 = r0.add_stock(2);
-    assert(r0.ids_of_living_stocks.size() == 1);
-    assert(r0.ids_of_reusable_stocks.size() == 0);
-    assert(r0.get_stock(i1).vertex_value() == 2);
-
-    auto i2 = r0.add_stock(3);
-    assert(r0.ids_of_living_stocks.size() == 2);
-    assert(r0.ids_of_reusable_stocks.size() == 0);
-    assert(r0.get_stock(i1).vertex_value() == 2);
-    assert(r0.get_stock(i2).vertex_value() == 3);
-
-    r0.remove_stock(i1);
-    assert(r0.ids_of_living_stocks.size() == 1);
-    assert(r0.ids_of_reusable_stocks.size() == 1);
-    assert(r0.get_stock(i2).vertex_value() == 3);
-
-    r0.remove_stock(i2);
-    assert(r0.ids_of_living_stocks.size() == 0);
-    assert(r0.ids_of_reusable_stocks.size() == 2);
 }
 
 void test_vertex_edge_and_repository()

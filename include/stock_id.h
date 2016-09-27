@@ -26,6 +26,11 @@ namespace lzhlib
         {
             return id_;
         }
+        stock_id& operator++()
+        {
+            ++id_;
+            return *this;
+        }
 
     private:
         std::size_t id_;
